@@ -85,3 +85,74 @@ struct UnCopyable {
 }
 ```
 
+## A Simple Introduction to Borrowing
+Borrowing is one of Rust's core features alongside its ownership checking. There
+are many cases where you want to use a value temporarily, and so don't want to 
+take ownership from the original binding. You can think of Rust's borrowing system
+as a readers-writer lock. You can take as many read-only references to a value as 
+you want as long as there are no mutable references, and you can only ever take one
+mutable reference to a value at a time when there are no other references to that
+value and the owning binding is mutable.
+```rust
+  let immut_obj = Object { value: 1 };
+
+  let invalid_ref = &mut immut_obj; // Compiler Error: "cannot borrow immutable local variable `obj` as mutable"
+
+  let mut obj = Object { value: 0 };
+
+  let objref = &obj;
+  let objref2 = &obj;
+  let objref3 = &obj;
+
+  let objmutref = &mut obj; // Compiler Error: "cannot borrow `obj` as mutable because it is also borrowed as immutable"
+```
+
+While an object has been borrowed you cannot make any changes to it such as 
+assigning a value to one of its fields or calling a mutating method on it.
+```rust
+  let obj = Object { value: 0 };
+
+  let objref = &obj;
+
+  obj.value = 42; // Compiler Error: "cannot assign to `obj.value` because it is borrowed"
+```
+
+## Pass by Value and Pass by Reference in Rust
+```rust
+// Assume we have these function signatures
+fn by_value(obj: Object) {
+  ...
+}
+
+fn by_ref(obj: &Object) {
+  ...
+}
+```
+
+It becomes very important to pay attention to the way arguments are passed into
+a function in Rust. Passing an argument by value moves ownership of that object
+(assuming it's not copyable) into the function's scope, so you won't be able to
+use it after the function call.
+```rust
+  let obj = Object { value: 0 };
+
+  by_value(obj);
+
+  let value = obj.value; // Compiler Error: "use of moved value: `obj.value`"
+```
+
+Passing an argument by reference does not take ownership of the object however, 
+so the binding is still usable after the function call.
+```rust
+  let obj = Object { value: 0 };
+
+  by_ref(&obj);
+
+  let value = obj.value; // Works fine
+```
+
+References can also be passed as mutable, this has the same behavior as passing
+an immutable reference into the function. When the function returns, the reference
+is destroyed and the original binding can be used again. When passing a mutable
+reference you should expect the internal state of the object to be changed in
+some way however.

@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_variables, unused_mut)]
 
 struct Object {
   value: i32,
