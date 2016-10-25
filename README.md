@@ -222,3 +222,56 @@ in the example function is bound to the lifetime of the first argument.
     ret = lifetimes(&obj2, &obj1); // Compiler Error: "`obj2` does not live long enough"
   }
 ```
+
+## Traits
+As opposed to the usual object oriented class structure found in many other
+languages, Rust implements its form of inheritence as traits. These are very
+similar to C#/Java interfaces or Swift protocols if you've used any of those 
+before. As opposed to providing the implementation, a trait merely provides
+a method signature for implementing objects to use.
+```rust
+trait MyTrait {
+  fn a_method(&self) -> i32;
+}
+```
+
+You can implement traits on any object, including the built in types of Rust.
+```rust
+impl MyTraid for Object {
+  fn a_method(&self) -> i32 {
+    self.value
+  }
+}
+
+impl MyTrait for i32 {
+  fn a_method(&self) -> i32 {
+    *self
+  }
+}
+```
+
+Traits can be used as types for function parameters or struct fields. This
+gives Rust polymorphism (Under the hood, the majority of the time, 
+these are still statically dispatched, but that's not something you don't 
+need to worry about).
+```rust
+fn call_trait<T: MyTrait>(obj: T) -> i32 {
+  obj.a_method()
+}
+...
+  let obj = Object { value: 42 };
+
+  println!("{}", call_trait(obj)); // Prints "42"
+
+  println!("{}", call_trait(100)); // Prints "100"
+```
+
+You can constrain a trait to inherit from another trait. This just means that
+any object that implements the subtrait must also implement the supertrait. 
+You can also implement default methods using trait methods that will be defined
+by an implementor.
+```rust
+trait SubTrait : MyTrait {
+  fn times_two(&self) -> i32 { self.a_method() * 2 }
+}
+```
