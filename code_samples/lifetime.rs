@@ -12,7 +12,7 @@ fn main() {
     
     let inner_ret: &i32 = lifetime(&obj1, &obj2);
     //ret = lifetime(&obj1, &obj2);
-    ret = lifetimes(&obj2, &obj1);
+    //ret = lifetimes(&obj2, &obj1);
 
     ret = lifetimes(&obj1, &obj2);
   }
