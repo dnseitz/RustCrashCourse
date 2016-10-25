@@ -156,3 +156,69 @@ an immutable reference into the function. When the function returns, the referen
 is destroyed and the original binding can be used again. When passing a mutable
 reference you should expect the internal state of the object to be changed in
 some way however.
+
+## Lifetimes
+```rust
+// Assume we have these functions
+fn lifetime<'a>(x: &'a Object, y: &'a Object) -> &'a i32 {
+  x.value
+}
+
+fn lifetimes<'a, 'b>(x: &'a Object, y: &'b Object) -> &'a i32 {
+  x.value
+}
+```
+Lifetimes in Rust are essentially just markers for the scope that an object will
+live in. If two references have the same lifetime then the lifetime will be 
+constrained to the shortest scope. Attempting to constrain a lifetime to a scope
+that does not last long enough will cause an error.
+```rust
+  let obj1 = Object { value: 0 };
+  let ret: &i32;
+  {
+    let obj2 = Object { value: 1 };
+
+    // Lifetime of `inner_ret` is constrained to the inner block
+    let inner_ret: &i32 = lifetime(&obj1, &obj2);
+
+    // `obj2`'s lifetime is the inner scope, but `ret`'s lifetime must be as
+    // long as the outer scope
+    ret = lifetime(&obj1, &obj2); // Compiler Error: "`obj2` does not live long enough"
+  }
+
+```
+
+By using different lifetime markers we can make it so certain values (like the lifetime
+of the return value) are constrained only to the lifetimes that matter to it.
+```rust
+  let obj1 = Object { value: 0 };
+  let ret: &i32;
+  {
+    let obj2 = Object { value: 1 };
+  
+    // Notice we are using the function with multiple lifetimes
+    ret = lifetimes(&obj1, &obj2); // This works fine because the return lifetime is no longer constrained to `obj2`'s lifetime
+  }
+```
+
+References marked by different lifetimes don't neccessarily have to live
+in different scopes however.
+```rust
+  let obj1 = Object { value: 0 };
+  let obj2 = Object { value: 1 };
+
+  let ret: &i32 = lifetimes(&obj1, &obj2); // Works fine, both lifetimes are the same scope
+```
+
+The lifetime annotation matters in the function declaration, the return value
+in the example function is bound to the lifetime of the first argument.
+```rust
+  let obj1 = Object { value: 0 };
+  let ret: &i32;
+  {
+    let obj2 = Object { value: 1 };
+
+    // The lifetime of `ret` should be the outer scope, but `obj2`'s lifetime is the inner scope
+    ret = lifetimes(&obj2, &obj1); // Compiler Error: "`obj2` does not live long enough"
+  }
+```
